@@ -1,0 +1,32 @@
+version: "3"
+services:
+  shiori:
+    image: ghcr.io/go-shiori/shiori:dev
+    container_name: shiori
+    restart: unless-stopped
+    ports:
+      - 5514:8080
+    environment:
+      SHIORI_DATABASE_URL: postgres://shiori:shiori@postgres/shiori?sslmode=disable
+    volumes:
+      - ${VOLUME_DIR}/data:/shiori
+    links:
+      - postgres
+    depends_on:
+      - postgres
+    networks:
+      - shiori-net
+  postgres:
+    image: postgres:15
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ${VOLUME_DIR}/postgres-data:/var/lib/postgresql/data
+    networks:
+      - shiori-net
+networks:
+  shiori-net: null
