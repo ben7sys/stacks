@@ -1,0 +1,13 @@
+version: "3.3"
+services:
+  fenrus:
+    container_name: Fenrus
+    environment:
+      - TZ=Pacific/Auckland
+    ports:
+      - 5004:3000
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    image: revenz/fenrus:latest
+networks: {}
