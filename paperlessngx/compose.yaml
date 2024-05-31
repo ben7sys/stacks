@@ -1,0 +1,70 @@
+version: "3.7"
+services:
+  gotenberg:
+    image: docker.io/gotenberg/gotenberg:7.8
+    container_name: paperless-gotenberg
+    restart: always
+    # The gotenberg chromium route is used to convert .eml files. We do not
+    # want to allow external content like tracking pixels or even javascript.
+    command:
+      - gotenberg
+      - --chromium-disable-javascript=true
+      - --chromium-allow-list=file:///tmp/.*
+  tika:
+    image: ghcr.io/paperless-ngx/tika:latest
+    container_name: paperless-tika
+    restart: always
+  broker:
+    image: redis
+    container_name: paperless-redis
+    restart: always
+    volumes:
+      - ${VOLUME_DIR}/redis:/data
+  db:
+    image: postgres:15
+    container_name: paperless-postgresdb
+    restart: always
+    volumes:
+      - ${VOLUME_DIR}/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: paperless-ngx
+    restart: always
+    depends_on:
+      - db
+      - broker
+    ports:
+      - 8700:8000
+    volumes:
+      - ${VOLUME_DIR}/data:/usr/src/paperless/data
+      - ${VOLUME_DIR}/media:/usr/src/paperless/media
+      - ${VOLUME_DIR}/export:/usr/src/paperless/export
+      - ${VOLUME_DIR}/paperless-inbox:/usr/src/paperless/consume
+    environment:
+      # https://docs.paperless-ngx.com/configuration/  
+      # env_file: paperless.env
+      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_DBHOST: db
+      USERMAP_UID: ${USERMAP_UID}
+      USERMAP_GID: ${USERMAP_GID}
+      # Tika & Gotenberg
+      PAPERLESS_TIKA_ENABLED: "True"
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998 # Set the endpoint URL were Paperless can reach your Tika server. Defaults to "http://localhost:9998".
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000 # Set the endpoint URL were Paperless can reach your Gotenberg server. Defaults to "http://localhost:3000".
+      # Initial Admin User
+      PAPERLESS_ADMIN_USER: ${PAPERLESS_ADMIN_USER}
+      PAPERLESS_ADMIN_PASSWORD: ${PAPERLESS_ADMIN_PASSWORD}
+      PAPERLESS_ADMIN_MAIL: ${PAPERLESS_ADMIN_MAIL}
+      # HTTPS Settings
+      PAPERLESS_URL: ${PAPERLESS_URL}
+      PAPERLESS_ALLOWED_HOSTS: ${PAPERLESS_ALLOWED_HOSTS}
+      PAPERLESS_CORS_ALLOWED_HOSTS: ${PAPERLESS_CORS_ALLOWED_HOSTS}
+      PAPERLESS_TRUSTED_PROXIES: ${PAPERLESS_TRUSTED_PROXIES}
+      PAPERLESS_CSRF_TRUSTED_ORIGINS: ${PAPERLESS_CSRF_TRUSTED_ORIGINS}
+networks:
+  paperlessngx: {}
+  "": {}
