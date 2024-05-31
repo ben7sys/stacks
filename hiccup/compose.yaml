@@ -1,0 +1,10 @@
+version: "3.3"
+services:
+  hiccup:
+    ports:
+      - 5005:80
+    volumes:
+      - "./configs/config.json:/usr/share/nginx/html/configs/config.\
+        json"
+    image: bleckbeard/hiccup:latest
+networks: {}
