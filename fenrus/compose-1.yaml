@@ -3,11 +3,11 @@ services:
   fenrus:
     container_name: Fenrus
     environment:
-      - TZ=Europe/Berlin
+      - TZ=Pacific/Auckland
     ports:
-      - 5513:3000
+      - 5004:3000
     volumes:
-      - ${VOLUME_DIR}/app:/app/data
+      - ./data:/app/data
     restart: unless-stopped
     image: revenz/fenrus:latest
 networks: {}
